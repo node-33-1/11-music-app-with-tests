@@ -1,9 +1,10 @@
 const catchError = require('../utils/catchError');
 const Artist = require('../models/Artist');
 const Genre = require('../models/Genre');
+const Song = require('../models/Song');
 
 const getAll = catchError(async(req, res) => {
-    const results = await Artist.findAll({ include: [ Genre ]});
+    const results = await Artist.findAll({ include: [ Genre, Song ]});
     return res.json(results);
 });
 
@@ -35,10 +36,32 @@ const update = catchError(async(req, res) => {
     return res.json(result[1][0]);
 });
 
+// /artists/:id/genres
+// [1, 2, 3]
+const setArtistGenres = catchError(async (req, res) => {
+    const { id } = req.params;
+    const artist = await Artist.findOne({where: {id: id}});
+    if (!artist) return res.status(404).json({ message: 'Artist not found'});
+    await artist.setGenres(req.body);
+    const genres = await artist.getGenres();
+    return res.json(genres);
+});
+
+const setArtistSongs = catchError(async (req, res) => {
+    const { id } = req.params;
+    const artist = await Artist.findByPk(id); 
+    if (!artist) return res.status(404).json({ message: 'Artist not found' });
+    await artist.setSongs(req.body);
+    const songs = await artist.getSongs();
+    return res.json(songs);
+});
+
 module.exports = {
     getAll,
     create,
     getOne,
     remove,
-    update
+    update,
+    setArtistGenres,
+    setArtistSongs,
 }
